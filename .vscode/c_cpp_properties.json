@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${default}",
+                "${workspaceFolder}/**",
+                "/home/niharika/opt/cross/lib/gcc/i686-elf/14.1.0/include"
+            ],
+            "defines": [],
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64",
+            "compilerPath": "/home/niharika/opt/cross/bin/i686-elf-gcc",
+            "compilerArgs": [
+                "-ffreestanding",
+                "-m32"
+            ]
+        }
+    ],
+    "version": 4
+}
