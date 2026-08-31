@@ -116,8 +116,8 @@ i686-elf-gcc --version
 ## Clone the Repository
 
 ```bash
-git clone <repository-url>
-cd <repository-name>
+mkdir myos
+git clone https://github.com/niharika896/myos.git
 ```
 
 ## Build and Run
