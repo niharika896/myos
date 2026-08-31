@@ -10,6 +10,7 @@
 #include "paging.h"
 #include "heap.h"
 #include "pic.h"
+#include "timer.h"
 // /* Check if the compiler thinks you are targeting the wrong operating system. */
 // #if defined(__linux__)
 // #error "You are not using a cross-compiler, you will most certainly run into trouble"
@@ -73,6 +74,13 @@ void kernel_main(uint32_t magic, uint32_t addr) {
     init_heap();
     terminal_writestring("Heap Initialised");
 
+
+    init_timer(100);
     __asm__ volatile("sti");
     terminal_writestring("Hardware Interrupts Enabled!\n");
+
+    //waiting for input
+    for(;;) {
+        __asm__ volatile("hlt"); 
+    }
 }

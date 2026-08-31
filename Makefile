@@ -5,11 +5,14 @@ LDFLAGS = -ffreestanding -O2 -nostdlib -lgcc
 SRC_DIR = src
 BUILD_DIR = build
 
-OBJS = $(addprefix $(BUILD_DIR)/, boot.o gdt_flush.o kernel.o gdt.o interrupts.o isr.o idt.o pmm.o vga.o helpers.o paging.o heap.o pic.o) 
+C_SOURCES = $(wildcard $(SRC_DIR)/*.c)
+S_SOURCES = $(wildcard $(SRC_DIR)/*.s)
+
+OBJS = $(patsubst $(SRC_DIR)/%.s, $(BUILD_DIR)/%.o, $(S_SOURCES)) \
+       $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(C_SOURCES))
 
 all: myos.iso
 
-# 3. Update the Assembly compile rule to output to build/
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.s 
 	@mkdir -p $(BUILD_DIR)
 	$(AS) $< -o $@
@@ -34,4 +37,4 @@ run-kernel: myos.bin
 	qemu-system-i386 -kernel myos.bin -no-reboot -d int -D qemu.log
 
 clean:
-	rm -rf $(BUILD_DIR) myos.bin myos.iso isodir
+	rm -rf $(BUILD_DIR) myos.bin myos.iso isodir qemu.log

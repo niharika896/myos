@@ -60,6 +60,20 @@ ISR_ERRCODE   29 //29: VMM Communication Exception
 ISR_ERRCODE   30 //30: Security Exception
 ISR_NOERRCODE 31
 
+.global isr32
+isr32:
+    cli
+    push $0       # Dummy error code
+    push $32      # Interrupt 32 (IRQ0 Timer)
+    jmp isr_common_stub
+
+.global isr33
+isr33:
+    cli
+    push $0
+    push $33
+    jmp isr_common_stub 
+
 # Common ISR stub: saves CPU state, calls C handler, restores state
 isr_common_stub:    
     pusha               //Pushes edi, esi, ebp, esp, ebx, edx, ecx, eax
@@ -86,3 +100,5 @@ isr_common_stub:
     popa                //Pops edi, esi, ebp, esp, ebx, edx, ecx, eax
     add $8, %esp        //Cleans up the pushed error code and pushed ISR number
     iret               //Return from interrupt
+
+

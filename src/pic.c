@@ -10,11 +10,11 @@
 
 // Remap the hardware interrupts to start at 32 (0x20) and 40 (0x28)
 void pic_remap(void) {
-    unsigned char a1, a2;
+    // unsigned char a1, a2;
 
     // Save the current masks
-    a1 = inb(PIC1_DATA);
-    a2 = inb(PIC2_DATA);
+    // a1 = inb(PIC1_DATA);
+    // a2 = inb(PIC2_DATA);
 
     // Start the initialization sequence in cascade mode
     outb(PIC1_COMMAND, 0x11);
@@ -41,9 +41,17 @@ void pic_remap(void) {
     outb(PIC2_DATA, 0x01);
     io_wait();
 
-    // Restore the saved masks
-    outb(PIC1_DATA, a1);
-    outb(PIC2_DATA, a2);
+    // uncomment for no interrupts
+    // outb(PIC1_DATA, a1);
+    // outb(PIC2_DATA, a2);
+
+    //comment out for no interrupts
+    // 0xFD is binary 11111101. 
+    //blocks everything on the Master PIC except bit 1 which represents IRQ1 (Keyboard).
+    outb(PIC1_DATA, 0xFC); 
+    
+    //completely blocks the Slave PIC.
+    outb(PIC2_DATA, 0xFF);
 }
 
 // Tell the PIC we finished handling the interrupt

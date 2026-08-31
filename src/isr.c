@@ -1,8 +1,20 @@
 #include "idt.h"
 #include "helpers.h"
+#include "keyboard.h"
 extern void terminal_writestring(const char* data);
 
 void isr_handler(struct registers* regs) {
+    #include "timer.h"
+    
+    if (regs->int_no == 32) {
+        timer_handler();
+        return;
+    }
+    if(regs->int_no == 33){
+        keyboard_handler();
+        return;
+    } 
+
     terminal_writestring("CPU EXCEPTION OCCURRED: ");
     
     if (regs->int_no == 0) {
@@ -29,10 +41,9 @@ void isr_handler(struct registers* regs) {
         else terminal_writestring("Read operation. ");
         if (us) terminal_writestring("In User Mode. ");
         else terminal_writestring("In Kernel Mode. ");
-    } else {
+    }else {
         terminal_writestring("Unhandled Exception!\n");
     }
-
     // Freeze the CPU on crash
     for (;;) {
         __asm__ volatile ("hlt");
