@@ -11,6 +11,8 @@
 #include "heap.h"
 #include "pic.h"
 #include "timer.h"
+#include "task.h" 
+
 // /* Check if the compiler thinks you are targeting the wrong operating system. */
 // #if defined(__linux__)
 // #error "You are not using a cross-compiler, you will most certainly run into trouble"
@@ -23,6 +25,20 @@
 
 extern uint32_t _kernel_start;
 extern uint32_t _kernel_end;
+
+void task_a() {
+    for (;;) {
+        terminal_writestring("A");
+        // No yield! I am hogging the CPU!
+    }
+}
+
+void task_b() {
+    for (;;) {
+        terminal_writestring("B");
+        // No yield! I am hogging the CPU!
+    }
+}
 
 void kernel_main(uint32_t magic, uint32_t addr) {
     init_gdt();
@@ -76,10 +92,22 @@ void kernel_main(uint32_t magic, uint32_t addr) {
 
 
     init_timer(100);
-    __asm__ volatile("sti");
+    
     terminal_writestring("Hardware Interrupts Enabled!\n");
 
-    //waiting for input
+    tasking_init();
+    create_task(1, task_a);
+    create_task(2, task_b);
+
+    // Turn on interrupts so the keyboard still works
+    __asm__ volatile("sti");
+
+    // The Main Kernel becomes Task 0's infinite loop
+    for(;;) {
+        terminal_writestring("0");
+        // yield(); 
+    }
+    // waiting for input
     for(;;) {
         __asm__ volatile("hlt"); 
     }

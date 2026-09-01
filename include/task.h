@@ -1,0 +1,29 @@
+#ifndef TASK_H
+#define TASK_H
+#include <stdint.h>
+
+struct context {
+    uint32_t edi;
+    uint32_t esi;
+    uint32_t ebx;
+    uint32_t ebp;
+    uint32_t eip; // instruction pointer
+};
+
+enum process_state { UNUSED, RUNNABLE, RUNNING, SLEEPING };
+
+struct process {
+    uint32_t pid;
+    enum process_state state;
+    uint32_t* page_directory; //memory map
+    uint8_t* kernel_stack;     // stack for this process
+    struct context* context;
+    void (*entry_point)();
+};
+
+void tasking_init(void);
+
+void create_task(uint32_t pid, void (*entry_point)());
+void yield(void); // forcing the current process to give up the CPU
+
+#endif

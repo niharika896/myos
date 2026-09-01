@@ -1,10 +1,12 @@
 #include <stdint.h>
 #include <stddef.h>
-
+#include "spinlock.h"
 
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
 #define VGA_MEMORY 0xB8000
+
+spinlock_t vga_lock;
 
 /* Hardware text mode color constants. */
 enum vga_color
@@ -54,6 +56,7 @@ uint16_t *terminal_buffer = (uint16_t *)VGA_MEMORY;
 
 void terminal_initialize(void)
 {
+	spinlock_init(&vga_lock);
 	terminal_row = 0;
 	terminal_column = 0;
 	terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
@@ -81,7 +84,7 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y)
 
 void terminal_putchar(char c)
 {
-
+	spinlock_acquire(&vga_lock);
 	if (c == '\n') {
         terminal_column = 0;
         if (++terminal_row == VGA_HEIGHT) {
@@ -108,6 +111,7 @@ void terminal_putchar(char c)
 			terminal_row = 0;
 		}
 	}
+	spinlock_release(&vga_lock);
 }
 
 void terminal_write(const char* data, size_t size){

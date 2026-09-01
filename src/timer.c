@@ -1,6 +1,7 @@
 #include "timer.h"
 #include "io.h"
 #include "pic.h"
+#include "task.h"
 #include <stdint.h>
 
 volatile uint32_t timer_ticks = 0;
@@ -20,4 +21,5 @@ void init_timer(uint32_t frequency) {
 void timer_handler(void) {
     timer_ticks++;
     pic_send_eoi(0);
+    yield();
 }
