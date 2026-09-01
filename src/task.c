@@ -51,6 +51,7 @@ void yield(void){
     }
     struct process* next_task = &tasks[next_pid];
     struct process* previous_task = current_task;
+    previous_task->state = RUNNABLE;
     next_task->state = RUNNING;
     current_task=next_task;
     switch_context(&previous_task->context, next_task->context);

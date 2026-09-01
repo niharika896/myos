@@ -30,6 +30,7 @@ void task_a() {
     for (;;) {
         terminal_writestring("A");
         // No yield! I am hogging the CPU!
+        for (volatile int i = 0; i < 10000000; i++) {}
     }
 }
 
@@ -37,6 +38,7 @@ void task_b() {
     for (;;) {
         terminal_writestring("B");
         // No yield! I am hogging the CPU!
+        for (volatile int i = 0; i < 10000000; i++) {}
     }
 }
 
@@ -106,6 +108,7 @@ void kernel_main(uint32_t magic, uint32_t addr) {
     for(;;) {
         terminal_writestring("0");
         // yield(); 
+        for (volatile int i = 0; i < 10000000; i++) {}
     }
     // waiting for input
     for(;;) {

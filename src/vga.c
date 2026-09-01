@@ -84,12 +84,13 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y)
 
 void terminal_putchar(char c)
 {
-	spinlock_acquire(&vga_lock);
+	uint32_t flags = spinlock_acquire(&vga_lock);
 	if (c == '\n') {
         terminal_column = 0;
         if (++terminal_row == VGA_HEIGHT) {
             terminal_row = 0;
         }
+		spinlock_release(&vga_lock,flags);
         return;
     }
     if (c == '\b') {
@@ -100,6 +101,7 @@ void terminal_putchar(char c)
             terminal_column = VGA_WIDTH - 1;
         }
         terminal_putentryat(' ', terminal_color, terminal_column, terminal_row);
+		spinlock_release(&vga_lock,flags);
         return;
     }
 	terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
@@ -111,7 +113,7 @@ void terminal_putchar(char c)
 			terminal_row = 0;
 		}
 	}
-	spinlock_release(&vga_lock);
+	spinlock_release(&vga_lock,flags);
 }
 
 void terminal_write(const char* data, size_t size){
