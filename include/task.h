@@ -2,6 +2,8 @@
 #define TASK_H
 #include <stdint.h>
 
+#define TASKS 3
+
 struct context {
     uint32_t edi;
     uint32_t esi;
@@ -21,9 +23,13 @@ struct process {
     void (*entry_point)();
 };
 
+extern struct process tasks[TASKS];
+extern struct process* current_task;
+
 void tasking_init(void);
 
 void create_task(uint32_t pid, void (*entry_point)());
 void yield(void); // forcing the current process to give up the CPU
+void kgets(char* output_buffer);
 
 #endif

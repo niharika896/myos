@@ -12,6 +12,7 @@
 #include "pic.h"
 #include "timer.h"
 #include "task.h" 
+#include "keyboard.h"
 
 // /* Check if the compiler thinks you are targeting the wrong operating system. */
 // #if defined(__linux__)
@@ -27,10 +28,23 @@ extern uint32_t _kernel_start;
 extern uint32_t _kernel_end;
 
 void task_a() {
-    for (;;) {
-        terminal_writestring("A");
-        // No yield! I am hogging the CPU!
-        for (volatile int i = 0; i < 10000000; i++) {}
+    char input[256];
+    for(;;){
+        terminal_writestring("myOS> ");
+        kgets(input);
+
+        if(strcmp(input,"help") == 0){
+            terminal_writestring("Commands: help, clear,ping\n");
+        }else if(strcmp(input,"clear")==0){
+            terminal_initialize();
+        }
+        else if(strcmp(input,"ping")==0){
+            terminal_writestring("pong!\n");
+        }else if(input[0]!='0'){
+            terminal_writestring("Unknown command: ");
+            terminal_writestring(input);
+            terminal_writestring("\n");
+        }
     }
 }
 
@@ -99,17 +113,17 @@ void kernel_main(uint32_t magic, uint32_t addr) {
 
     tasking_init();
     create_task(1, task_a);
-    create_task(2, task_b);
+    // create_task(2, task_b);
 
     // Turn on interrupts so the keyboard still works
     __asm__ volatile("sti");
 
     // The Main Kernel becomes Task 0's infinite loop
-    for(;;) {
-        terminal_writestring("0");
-        // yield(); 
-        for (volatile int i = 0; i < 10000000; i++) {}
-    }
+    // for(;;) {
+    //     terminal_writestring("0");
+    //     // yield(); 
+    //     for (volatile int i = 0; i < 10000000; i++) {}
+    // }
     // waiting for input
     for(;;) {
         __asm__ volatile("hlt"); 
