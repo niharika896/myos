@@ -15,3 +15,21 @@ void print_hex(uint32_t num) {
     terminal_writestring(buffer);
     terminal_writestring("\n");
 }
+
+void terminal_write_uint(uint32_t n) {
+    char buf[11]; // max "4294967295" + null terminator
+    int i = 10;
+    buf[i] = '\0';
+
+    if (n == 0) {
+        terminal_writestring("0");
+        return;
+    }
+
+    while (n > 0 && i > 0) {
+        buf[--i] = '0' + (n % 10);
+        n /= 10;
+    }
+
+    terminal_writestring(&buf[i]);
+}

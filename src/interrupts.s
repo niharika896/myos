@@ -101,4 +101,15 @@ isr_common_stub:
     add $8, %esp        //Cleans up the pushed error code and pushed ISR number
     iret               //Return from interrupt
 
+.global isr128
+.type isr128, @function
+isr128:
+    cli
+    pusha //all gprs 
+    push %esp 
 
+    call syscall_handler
+
+    add $4, %esp
+    popa
+    iret    //return to ring 3

@@ -27,6 +27,59 @@
 extern uint32_t _kernel_start;
 extern uint32_t _kernel_end;
 
+// --- Ring 3 "Standard Library" ---
+void sys_write(int fd, char* str, int len) {
+    int ret;
+    // "=a"(ret) forces GCC to realize EAX is destroyed by the kernel!
+    __asm__ volatile("int $0x80" : "=a"(ret) : "a"(4), "b"(fd), "c"(str), "d"(len) : "memory");
+}
+
+int sys_read(int fd, char* buf, int len) {
+    int ret;
+    __asm__ volatile("int $0x80" : "=a"(ret) : "a"(3), "b"(fd), "c"(buf), "d"(len) : "memory");
+    return ret;
+}
+
+void sys_yield() {
+    int ret;
+    __asm__ volatile("int $0x80" : "=a"(ret) : "a"(158) : "memory");
+}
+
+void sys_exit() {
+    int ret;
+    __asm__ volatile("int $0x80" : "=a"(ret) : "a"(1) : "memory");
+}
+
+
+void user_program() {
+    char input_buffer[256] = {0};
+
+    sys_write(1, "\n[Ring 3] What is your name? ", 30);
+    sys_read(0, input_buffer, 256);
+
+    // ADD THIS — test immediately, before the "Hello" line runs
+    // sys_write(1, "[DEBUG immediately after read] ", 32);
+    // sys_write(1, input_buffer, 256);
+    // sys_write(1, "\n", 2);
+
+    sys_write(1, "[Ring 3] Hello, ", 17);
+    sys_write(1, input_buffer, 256);
+    sys_write(1, "!\n", 3);
+
+    sys_write(1, "[Ring 3] Exiting.\n", 19);
+    sys_exit();
+}
+
+void task_b() {
+    uint8_t* user_stack_memory = (uint8_t*)kmalloc(4096);
+    uint32_t user_stack_bottom = (uint32_t)user_stack_memory + 4096;
+
+    vmm_set_user_page((uint32_t)user_stack_memory);
+    vmm_set_user_page(user_stack_bottom - 1);
+    
+    jump_usermode((uint32_t)user_program, user_stack_bottom);
+}
+
 void task_a() {
     char input[256];
     for(;;){
@@ -40,19 +93,23 @@ void task_a() {
         }
         else if(strcmp(input,"ping")==0){
             terminal_writestring("pong!\n");
-        }else if(input[0]!='0'){
+        }
+        else if(strcmp(input,"sandbox")==0){
+            uint32_t child_pid = create_task(task_b);
+            
+            if (child_pid != 0) {
+                while (tasks[child_pid].state != DEAD && tasks[child_pid].state != UNUSED) {
+                    yield(); 
+                }
+            } else {
+                terminal_writestring("Error: Maximum processes reached.\n");
+            }
+        }
+        else if(input[0]!='\0'){
             terminal_writestring("Unknown command: ");
             terminal_writestring(input);
             terminal_writestring("\n");
         }
-    }
-}
-
-void task_b() {
-    for (;;) {
-        terminal_writestring("B");
-        // No yield! I am hogging the CPU!
-        for (volatile int i = 0; i < 10000000; i++) {}
     }
 }
 
@@ -112,7 +169,7 @@ void kernel_main(uint32_t magic, uint32_t addr) {
     terminal_writestring("Hardware Interrupts Enabled!\n");
 
     tasking_init();
-    create_task(1, task_a);
+    create_task(task_a);
     // create_task(2, task_b);
 
     // Turn on interrupts so the keyboard still works

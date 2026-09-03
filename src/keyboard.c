@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "vga.h"
 #include "task.h"
+#include "helpers.h"
 
 //QWERTY Scancode to ASCII lookup table
 const char lookup_table[128] = {
@@ -19,17 +20,20 @@ char kbd_buffer[KBD_BUFFER_SIZE];
 uint32_t kbd_index=0;
 volatile int line_ready = 0;
 
+volatile int kbd_waiter_pid = -1;
+
 void kgets(char* output_buffer){
   line_ready = 0;
   kbd_index = 0;
 
+  kbd_waiter_pid = current_task->pid;
   current_task->state = SLEEPING;
   yield();
+  kbd_waiter_pid=-1;
 
-  for(int i=0;i<=kbd_index;i++){
+  for(uint32_t i=0;i<=kbd_index;i++){
     output_buffer[i] = kbd_buffer[i];
   }
-
 }
 
 int strcmp(const char* s1, const char* s2){
@@ -58,7 +62,9 @@ void keyboard_handler(void) {
               kbd_buffer[kbd_index] = '\0';
               line_ready = 1;
 
-              tasks[1].state = RUNNABLE;
+              if(kbd_waiter_pid!=-1){
+                tasks[kbd_waiter_pid].state = RUNNABLE;
+              }
             }else{
               if(kbd_index<KBD_BUFFER_SIZE -1){
                 kbd_buffer[kbd_index++] = c;

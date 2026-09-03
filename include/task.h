@@ -12,7 +12,7 @@ struct context {
     uint32_t eip; // instruction pointer
 };
 
-enum process_state { UNUSED, RUNNABLE, RUNNING, SLEEPING };
+enum process_state { UNUSED, RUNNABLE, RUNNING, SLEEPING, DEAD};
 
 struct process {
     uint32_t pid;
@@ -21,6 +21,8 @@ struct process {
     uint8_t* kernel_stack;     // stack for this process
     struct context* context;
     void (*entry_point)();
+    //file descriptor table
+    int files[16];
 };
 
 extern struct process tasks[TASKS];
@@ -28,8 +30,10 @@ extern struct process* current_task;
 
 void tasking_init(void);
 
-void create_task(uint32_t pid, void (*entry_point)());
+uint32_t create_task(void (*entry_point)());
 void yield(void); // forcing the current process to give up the CPU
 void kgets(char* output_buffer);
+
+extern void jump_usermode(uint32_t entry_point, uint32_t user_stack);
 
 #endif

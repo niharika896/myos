@@ -16,7 +16,7 @@ extern void isr21(void); extern void isr22(void); extern void isr23(void);
 extern void isr24(void); extern void isr25(void); extern void isr26(void);
 extern void isr27(void); extern void isr28(void); extern void isr29(void);
 extern void isr30(void); extern void isr31(void); extern void isr32(void);
-extern void isr33(void);
+extern void isr33(void); extern void isr128();
 
 void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags) {
     idt_entries[num].offset_low  = base & 0xFFFF;
@@ -103,6 +103,7 @@ void init_idt(void) {
     idt_set_gate(31, (uint32_t)isr31, 0x08, 0x8E);
     idt_set_gate(32, (uint32_t)isr32, 0x08, 0x8E);
     idt_set_gate(33, (uint32_t)isr33, 0x08, 0x8E);  
+    idt_set_gate(128, (uint32_t)isr128, 0x08, 0xEE);   
 
     // Tell the CPU where the IDT is using inline assembly
     idt_flush((uint32_t)&idt_ptr);
