@@ -1,8 +1,9 @@
 #ifndef TASK_H
 #define TASK_H
 #include <stdint.h>
+#include "paging.h"
 
-#define TASKS 3
+#define TASKS 4
 
 struct context {
     uint32_t edi;
@@ -17,7 +18,7 @@ enum process_state { UNUSED, RUNNABLE, RUNNING, SLEEPING, DEAD};
 struct process {
     uint32_t pid;
     enum process_state state;
-    uint32_t* page_directory; //memory map
+    page_directory_t* page_directory; //memory map
     uint8_t* kernel_stack;     // stack for this process
     struct context* context;
     void (*entry_point)();

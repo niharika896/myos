@@ -9,5 +9,5 @@ void pmm_mark_free(uint32_t base_address, uint32_t size);
 
 void* pmm_alloc_frame(void);
 void pmm_free_frame(void* physical_address);
-
+void pmm_increment_ref_count(uint32_t physical_address);
 #endif

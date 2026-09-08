@@ -5,6 +5,7 @@
 #define BITMAP_SIZE (MAX_BLOCKS / 32)
 
 static uint32_t memory_bitmap[BITMAP_SIZE];
+uint8_t frame_ref_counts[MAX_BLOCKS];
 
 #define SET_BIT(bit)   (memory_bitmap[(bit) / 32] |=  (1 << ((bit) % 32)))
 #define CLEAR_BIT(bit) (memory_bitmap[(bit) / 32] &= ~(1 << ((bit) % 32)))
@@ -13,6 +14,9 @@ void pmm_init(void) {
     //0xFFFFFFFF means all 32 bits are '1' (Used/Reserved)
     for (int i = 0; i < BITMAP_SIZE; i++) {
         memory_bitmap[i] = 0xFFFFFFFF; 
+    }
+    for(int i=0;i<BITMAP_SIZE;i++){
+        memory_bitmap[i]=0xFFFFFFFF;
     }
 }
 
@@ -52,7 +56,7 @@ void* pmm_alloc_frame(void){
     }
 
     SET_BIT(frame);
-
+    frame_ref_counts[frame]=1;
     uint32_t physical_address = frame * BLOCK_SIZE;
 
     return (void*)physical_address;
@@ -61,5 +65,16 @@ void* pmm_alloc_frame(void){
 void pmm_free_frame(void* physical_address){
     uint32_t addr = (uint32_t)physical_address;
     uint32_t frame = addr/BLOCK_SIZE;
-    CLEAR_BIT(frame);
+    
+    if(frame_ref_counts[frame]>0){
+        frame_ref_counts[frame]--;
+    }
+    if(frame_ref_counts[frame]==0){
+        CLEAR_BIT(frame);
+    }
+}
+
+void pmm_increment_ref_count(uint32_t physical_address){
+    uint32_t frame = physical_address/BLOCK_SIZE;
+    frame_ref_counts[frame]++;
 }

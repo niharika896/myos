@@ -33,3 +33,20 @@ void terminal_write_uint(uint32_t n) {
 
     terminal_writestring(&buf[i]);
 }
+
+void* memset(void* dest, int val, uint32_t count) {
+    uint8_t* temp = (uint8_t*)dest;
+    for (uint32_t i = 0; i < count; i++) {
+        temp[i] = (uint8_t)val;
+    }
+    return dest;
+}
+
+void* memcpy(void* dest,const void* src,uint32_t count){
+    uint8_t* d = (uint8_t*)dest;
+    const uint8_t* s = (const uint8_t*)src;
+    for(uint32_t i=0;i<count;i++){
+        d[i]=s[i];
+    }
+    return dest;
+}

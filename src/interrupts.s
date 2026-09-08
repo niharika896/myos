@@ -60,6 +60,8 @@ ISR_ERRCODE   29 //29: VMM Communication Exception
 ISR_ERRCODE   30 //30: Security Exception
 ISR_NOERRCODE 31
 
+ISR_NOERRCODE 128
+
 .global isr32
 isr32:
     cli
@@ -91,6 +93,8 @@ isr_common_stub:
     call isr_handler
     add $4, %esp        //Clean up pushed pointer
 
+.global isr_exit_stub
+isr_exit_stub:
     pop %eax            //Reload original data segment descriptor
     mov %ax, %ds
     mov %ax, %es
@@ -100,16 +104,3 @@ isr_common_stub:
     popa                //Pops edi, esi, ebp, esp, ebx, edx, ecx, eax
     add $8, %esp        //Cleans up the pushed error code and pushed ISR number
     iret               //Return from interrupt
-
-.global isr128
-.type isr128, @function
-isr128:
-    cli
-    pusha //all gprs 
-    push %esp 
-
-    call syscall_handler
-
-    add $4, %esp
-    popa
-    iret    //return to ring 3

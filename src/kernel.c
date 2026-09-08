@@ -13,6 +13,7 @@
 #include "timer.h"
 #include "task.h" 
 #include "keyboard.h"
+#include "libc.h"
 
 // /* Check if the compiler thinks you are targeting the wrong operating system. */
 // #if defined(__linux__)
@@ -50,32 +51,42 @@ void sys_exit() {
     __asm__ volatile("int $0x80" : "=a"(ret) : "a"(1) : "memory");
 }
 
-
 void user_program() {
-    char input_buffer[256] = {0};
-
-    sys_write(1, "\n[Ring 3] What is your name? ", 30);
-    sys_read(0, input_buffer, 256);
-
-    // ADD THIS — test immediately, before the "Hello" line runs
-    // sys_write(1, "[DEBUG immediately after read] ", 32);
-    // sys_write(1, input_buffer, 256);
-    // sys_write(1, "\n", 2);
-
-    sys_write(1, "[Ring 3] Hello, ", 17);
-    sys_write(1, input_buffer, 256);
-    sys_write(1, "!\n", 3);
-
-    sys_write(1, "[Ring 3] Exiting.\n", 19);
-    sys_exit();
+    int pid = fork();
+    
+    if (pid == 0) {
+        char child_msg[] = "Child: Woke up in cloned memory!\n";
+        sys_write(1, child_msg, 33);
+        
+        // This variable assignment triggers Exception 14 (CoW Trap)
+        // The hardware will duplicate the physical frame in the background.
+        int child_var = 100; 
+        
+        sys_exit();
+    } else {
+        char parent_msg[] = "Parent: Successfully forked!\n";
+        sys_write(1, parent_msg, 29);
+        
+        // This variable assignment triggers Exception 14 (CoW Trap)
+        int parent_var = 200;
+        
+        sys_exit();
+    }
 }
 
 void task_b() {
-    uint8_t* user_stack_memory = (uint8_t*)kmalloc(4096);
-    uint32_t user_stack_bottom = (uint32_t)user_stack_memory + 4096;
+    terminal_writestring("\n[Kernel] Allocating true isolated user stack...\n");
 
-    vmm_set_user_page((uint32_t)user_stack_memory);
-    vmm_set_user_page(user_stack_bottom - 1);
+    uint32_t user_stack_phys = (uint32_t)pmm_alloc_frame();
+
+    uint32_t user_stack_virt = 0x80000000;
+
+    vmm_map_page_to_dir(current_task->page_directory, user_stack_virt, user_stack_phys, PAGE_USER | PAGE_WRITE);
+    //flushing tlb
+    __asm__ volatile("mov %0, %%cr3" : : "r"((uint32_t)current_task->page_directory) : "memory");
+    uint32_t user_stack_bottom = user_stack_virt + 4096;
+    
+    terminal_writestring("[Kernel] Dropping privileges into isolated Ring 3...\n");
     
     jump_usermode((uint32_t)user_program, user_stack_bottom);
 }
@@ -101,6 +112,9 @@ void task_a() {
                 while (tasks[child_pid].state != DEAD && tasks[child_pid].state != UNUSED) {
                     yield(); 
                 }
+                pmm_free_frame((void*)tasks[child_pid].page_directory);
+                kfree(tasks[child_pid].kernel_stack);
+                tasks[child_pid].state = UNUSED;
             } else {
                 terminal_writestring("Error: Maximum processes reached.\n");
             }
@@ -174,13 +188,6 @@ void kernel_main(uint32_t magic, uint32_t addr) {
 
     // Turn on interrupts so the keyboard still works
     __asm__ volatile("sti");
-
-    // The Main Kernel becomes Task 0's infinite loop
-    // for(;;) {
-    //     terminal_writestring("0");
-    //     // yield(); 
-    //     for (volatile int i = 0; i < 10000000; i++) {}
-    // }
     // waiting for input
     for(;;) {
         __asm__ volatile("hlt"); 

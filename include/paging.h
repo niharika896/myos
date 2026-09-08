@@ -19,6 +19,13 @@ void init_paging(void);
 
 void vmm_map_page(uint32_t virtual_addr, uint32_t physical_addr, uint32_t flags); 
 
-void vmm_set_user_page(uint32_t virtual_addr);
+// void vmm_set_user_page(uint32_t virtual_addr);
+void vmm_map_page_to_dir(page_directory_t* pd,uint32_t virtual_addr,uint32_t physical_addr, uint32_t flags);
 
+page_directory_t* clone_page_directory();
+
+void clone_user_pages_cow(page_directory_t* parent_pd, page_directory_t* child_pd);
+
+
+void handle_cow_fault(uint32_t fault_addr);
 #endif
